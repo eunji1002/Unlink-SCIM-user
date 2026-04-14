@@ -1,0 +1,31 @@
+modules:
+  jira:adminPage:
+    - key: unlink-scim-user-admin-page
+      title: Unlink SCIM user
+      resource: main
+      resolver:
+        function: resolver
+
+  function:
+    - key: resolver
+      handler: index.handler
+
+resources:
+  - key: main
+    path: static/scim-user-unlink/build
+
+permissions:
+  scopes:
+    - read:user:jira
+    - read:group:jira
+  external:
+    fetch:
+      backend:
+        - "https://api.atlassian.com"
+
+app:
+  runtime:
+    name: nodejs22.x
+    memoryMB: 256
+    architecture: arm64
+  id: ari:cloud:ecosystem::app/3c4bba28-ebf5-49a9-bf5e-b452693ace23
