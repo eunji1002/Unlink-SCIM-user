@@ -3,6 +3,7 @@ import ForgeReconciler, {
   Box,
   Heading,
   Label,
+  LoadingButton,
   Lozenge,
   SectionMessage,
   Select,
@@ -20,6 +21,9 @@ function App() {
   const [error, setError] = useState('');
   const [hasMoreUsers, setHasMoreUsers] = useState(false);
   const [isTruncated, setIsTruncated] = useState(false);
+  const [unlinking, setUnlinking] = useState(false);
+  const [unlinkResults, setUnlinkResults] = useState([]);
+  const [unlinkSummary, setUnlinkSummary] = useState(null);
 
   useEffect(() => {
     let isMounted = true;
@@ -71,6 +75,37 @@ function App() {
     label: `${user.displayName} (${user.secondaryText})`,
     value: user.accountId,
   }));
+
+  const handleUnlink = async () => {
+    setUnlinking(true);
+    setUnlinkResults([]);
+    setUnlinkSummary(null);
+    setError('');
+
+    try {
+      const usersToUnlink = selectedUsers
+        .map((selectedUser) =>
+          orgUsers.find((user) => user.accountId === selectedUser.value)
+        )
+        .filter(Boolean);
+
+      const response = await invoke('unlinkSelectedUsers', {
+        users: usersToUnlink,
+      });
+
+      if (!response?.ok) {
+        setError(response?.error || 'Failed to unlink selected users.');
+        return;
+      }
+
+      setUnlinkResults(Array.isArray(response.results) ? response.results : []);
+      setUnlinkSummary(response.summary || null);
+    } catch (requestError) {
+      setError(requestError.message || 'An error occurred while unlinking users.');
+    } finally {
+      setUnlinking(false);
+    }
+  };
 
   return (
     <Stack space="space.300">
@@ -151,6 +186,49 @@ function App() {
           </Stack>
         )}
       </Box>
+
+      <Box>
+        <LoadingButton
+          appearance="danger"
+          isLoading={unlinking}
+          isDisabled={selectedUsers.length === 0 || unlinking}
+          onClick={handleUnlink}
+        >
+          Unlink selected users
+        </LoadingButton>
+      </Box>
+
+      {unlinkSummary ? (
+        <SectionMessage
+          appearance={unlinkSummary.failed > 0 ? 'warning' : 'confirmation'}
+          title="Unlink result"
+        >
+          <Text>
+            Total: {unlinkSummary.total}, succeeded: {unlinkSummary.succeeded},
+            failed: {unlinkSummary.failed}
+          </Text>
+        </SectionMessage>
+      ) : null}
+
+      {unlinkResults.length > 0 ? (
+        <Box>
+          <Heading size="medium">Per-user results</Heading>
+          <Stack space="space.100">
+            {unlinkResults.map((result) => (
+              <Box key={`${result.accountId}-${result.displayName}`}>
+                <Text>
+                  <Strong>{result.displayName}</Strong>{' '}
+                  <Lozenge appearance={result.ok ? 'success' : 'removed'}>
+                    {result.ok ? 'success' : 'failed'}
+                  </Lozenge>
+                </Text>
+                <Text>{result.message}</Text>
+                {result.details ? <Text>{result.details}</Text> : null}
+              </Box>
+            ))}
+          </Stack>
+        </Box>
+      ) : null}
     </Stack>
   );
 }
