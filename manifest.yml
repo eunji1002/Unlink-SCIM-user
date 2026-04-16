@@ -3,6 +3,7 @@ modules:
     - key: unlink-scim-user-admin-page
       title: Unlink SCIM user
       resource: main
+      render: native
       resolver:
         function: resolver
 
@@ -12,12 +13,13 @@ modules:
 
 resources:
   - key: main
-    path: static/scim-user-unlink/build
+    path: src/frontend/index.jsx
 
 permissions:
   scopes:
     - read:user:jira
     - read:group:jira
+    - read:jira-user
   external:
     fetch:
       backend:

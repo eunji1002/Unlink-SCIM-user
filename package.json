@@ -10,6 +10,9 @@
   },
   "dependencies": {
     "@forge/api": "^7.1.3",
-    "@forge/resolver": "1.7.1"
+    "@forge/bridge": "^5.15.1",
+    "@forge/react": "^11.2.0",
+    "@forge/resolver": "1.7.1",
+    "react": "^18.3.1"
   }
 }
